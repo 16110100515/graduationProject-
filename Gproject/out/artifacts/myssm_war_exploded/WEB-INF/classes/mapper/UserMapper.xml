@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.sm1234.dao.UserMapper">
+
+
+
+	<resultMap id="BaseResultMap" type="cn.sm1234.domain.User">
+		<id column="id" property="id" jdbcType="INTEGER" />
+		<result column="loginacct" property="loginacct" jdbcType="VARCHAR" />
+		<result column="userpswd" property="userpswd" jdbcType="CHAR" />
+		<result column="username" property="username" jdbcType="VARCHAR" />
+		<result column="email" property="email" jdbcType="VARCHAR" />
+		<result column="createtime" property="createtime" jdbcType="CHAR" />
+	</resultMap>
+	<resultMap id="UserSelectResultMap" type="cn.sm1234.domain.UserSelect">
+		<id column="id" property="id" jdbcType="INTEGER" />
+		<result column="belongto" property="belongto" jdbcType="VARCHAR" />
+		<result column="name" property="name" jdbcType="VARCHAR" />
+		<result column="fieldname" property="fieldname" jdbcType="VARCHAR" />
+
+	</resultMap>
+	<delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+		delete from t_user
+		where id = #{id,jdbcType=INTEGER}
+	</delete>
+
+	<insert id="insert1" parameterType="cn.sm1234.domain.User">
+		insert into t_user (id,
+		loginacct, userpswd,
+		username, email, createtime
+		)
+		values
+		<foreach collection="list" item="user" separator=",">
+			(#{user.id},#{user.loginacct},#{user.userpswd},#{user.username},#{user.email},#{user.createtime})
+		</foreach>
+
+	</insert>
+	<!--<insert id="insert1" parameterType="cn.sm1234.domain.User">-->
+		<!--insert into t_user (id,-->
+		<!--loginacct, userpswd,-->
+		<!--username, email, createtime,type-->
+		<!--)-->
+		<!--values-->
+		<!--(#{id,jdbcType=INTEGER}, #{loginacct,jdbcType=VARCHAR},-->
+		<!--#{userpswd,jdbcType=CHAR},-->
+		<!--#{username,jdbcType=VARCHAR},-->
+		<!--#{email,jdbcType=VARCHAR}, #{createtime,jdbcType=CHAR},#{type,jdbcType=VARCHAR}-->
+		<!--)-->
+	<!--</insert>-->
+	<update id="updateByPrimaryKey" parameterType="cn.sm1234.domain.User">
+		update t_user
+		set
+		loginacct = #{loginacct,jdbcType=VARCHAR},
+		username = #{username,jdbcType=VARCHAR},
+		email = #{email,jdbcType=VARCHAR}
+		where id = #{id,jdbcType=INTEGER}
+	</update>
+	<select id="selectByPrimaryKey" resultMap="BaseResultMap"
+		parameterType="java.lang.Integer">
+		select id, loginacct, userpswd, username, email,
+		createtime
+		from t_user
+		where id = #{id,jdbcType=INTEGER}
+	</select>
+	<select id="selectAll" resultMap="BaseResultMap">
+		select id, loginacct, userpswd,
+		username, email, createtime
+		from t_user
+	</select>
+
+	<select id="queryUserlogin" parameterType="map" resultMap="BaseResultMap">
+		select id, loginacct, userpswd,
+		username, email, createtime
+		from t_user where loginacct=#{loginacct} and userpswd=#{userpswd} and type=#{type}
+	</select>
+
+	<select id="queryList"  resultMap="BaseResultMap">
+		select id, loginacct, userpswd,
+		username, email, createtime
+		from t_user
+		<where>
+			<if test="queryText!=null">loginacct like concat("%",#{queryText},"%")</if>
+		</where>
+		order by createtime desc
+		limit #{startIndex},#{pagesize}
+	</select>
+	<select id="queryCount"  resultType="int">
+		select count(*)
+		from t_user
+		<where>
+			<if test="queryText!=null">loginacct like concat("%",#{queryText},"%")</if>
+		</where>
+
+	</select>
+
+	<select id="queryUserSelect"  resultMap="UserSelectResultMap">
+		select id,belongto,name,fieldname
+		from t_user_filter
+
+
+	</select>
+
+	<select id="queryUserSelected"  parameterType="String" resultType="String">
+		select selected
+		from t_user_selected
+		WHERE userid = #{str}
+	</select>
+
+	<update id="saveUserSelected"  parameterType="map" >
+		update t_user_selected
+		set
+		selected = #{selected,jdbcType=VARCHAR}
+
+
+		WHERE userid = #{userid}
+	</update>
+
+	<update id="insertUserSelected"  parameterType="map" >
+		INSERT INTO t_user_selected
+
+		(selected ,
+		userid )
+		VALUES
+		(#{selected,jdbcType=VARCHAR},#{userid,jdbcType=VARCHAR})
+
+
+	</update>
+
+	<select id="querAllRole" resultType="cn.sm1234.domain.Role">
+		SELECT * from t_role
+	</select>
+
+	<select id="queryRoleByUserid" parameterType="int" resultType="int">
+		select roleid from t_user_role where userid = #{id}
+	</select>
+	<insert id="saveUserRoleRelationship">
+		<foreach collection="data.ids" item="roleid" separator=";">
+			INSERT into t_user_role (userid,roleid) VALUES (#{userid},#{roleid})
+		</foreach>
+	</insert>
+	<delete id="deleteUserRoleRelationship">
+		delete from  t_user_role where userid=#{userid} and roleid in
+		<foreach collection="data.ids" item="idabc" open="(" separator="," close=")" >
+			#{idabc}
+		</foreach>
+	</delete>
+
+	<!--<delete id="deleteUserRoleRelationship">-->
+		<!--delete from t_user_role where userid=#{userid} and roleid in-->
+		<!--<foreach collection="data.ids" item="id123" open="(" separator="," close=")">-->
+			<!--#{id123}-->
+		<!--</foreach>-->
+	<!--</delete>-->
+
+	<select id="queryPermissionByUserid" resultType="cn.sm1234.domain.Permission">
+		select distinct t_permission.id, t_permission.pid, t_permission.name,t_permission.icon,t_permission.url
+		from t_permission,t_role_permission,t_role,t_user_role,t_user
+		where
+		t_permission.id = t_role_permission.`permissionid`
+		and t_role_permission.`roleid` = t_role.id
+		and t_role.`id`=t_user_role.`roleid`
+		and t_user_role.`userid` = t_user.`id`
+		and t_user.id=#{userid} order by t_permission.id
+	</select>
+
+</mapper>

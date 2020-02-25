@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="war" name="version1_5_2">
+    <output-path>$PROJECT_DIR$/out/artifacts/version1_5_2</output-path>
+    <root id="archive" name="version1_5_2.war">
+      <element id="artifact" artifact-name="myssm:war exploded" />
+    </root>
+  </artifact>
+</component>
